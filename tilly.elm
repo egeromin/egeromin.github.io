@@ -272,7 +272,7 @@ getTrainedValues : Cmd Msg
 getTrainedValues =
   let
     url =
-      "/values.json"
+      "/values.json?"
   in
     Http.send FetchedValues (Http.get url decodeInitialValues)
 
