@@ -1,6 +1,11 @@
 import Array exposing (Array, repeat, get, indexedMap, toList, slice)
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import Http
+import Json.Decode as Decode
+
+import DefaultValues2
 
 type Player =
     Me | Opponent | Nobody
@@ -13,26 +18,98 @@ type alias Board = Array Player
 
 type alias Model =
     {
-        board: Board
+        board: Board,
+        values: TrainedValues,
+        winner: Player
     }
 
-model : Model
-model = Model (repeat board_size Nobody)
 
-type alias Msg = {position: Int}  -- int: position; player: player
+
+type Msg = 
+    Position (Int)
+    | FetchedValues (Result Http.Error TrainedValues)
 
 
 update_position : Int -> Player -> Int -> Player -> Player
 update_position to_update substitute i current =
     if to_update == i then substitute else current
 
-update : Msg -> Model -> Model
-update {position} {board} =
-    Model (
-        updateBoard board Me position
-        |>
-            aiMove Opponent defaultValues
-    )
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg {board, values, winner} =
+    
+    if winner /= Nobody then 
+        ({board=board, values=values, winner=winner}, Cmd.none)
+    else
+    case msg of 
+        Position position ->
+            let
+                newBoard=updateBoard board Me position
+                |>
+                    aiMove Opponent values
+            in
+            (
+                {
+                    board=newBoard,
+                    values=values,
+                    winner=(findWinner newBoard)
+                },
+                Cmd.none
+            )
+        FetchedValues (Ok newValues) ->
+            ({board=board, values=newValues, winner=winner}, Cmd.none)
+        _ -> ({board=board, values=values, winner=winner}, Cmd.none)
+
+
+
+type alias Line = List Int
+
+lines : List Line
+lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]]
+
+
+getValueFromArrayWithDefault : (Array a) -> a -> Int -> a
+getValueFromArrayWithDefault values default i =
+    Maybe.withDefault default (get i values)
+
+takeFromListWithDefault : (List a) -> a -> Int -> a
+takeFromListWithDefault values default i = 
+    if i == 0 then
+        Maybe.withDefault default <| List.head values
+    else
+        takeFromListWithDefault (List.drop 1 values) default (i-1)
+
+
+lineWinner : Board -> Line -> Player
+lineWinner board line = 
+    let 
+        x = Debug.log "ok" "ok"
+    in
+    let
+        a = getValueFromArrayWithDefault board Nobody 
+            <| takeFromListWithDefault line 0 0 
+        b = getValueFromArrayWithDefault board Nobody 
+            <| takeFromListWithDefault line 0 1 
+        c = getValueFromArrayWithDefault board Nobody 
+            <| takeFromListWithDefault line 0 2 
+        d = Debug.log "a, b, c" [a, b, c]
+    in
+        if (a == b) && (b == c) then a else Nobody
+
+
+findWinner : Board -> Player
+findWinner board = 
+    List.map (lineWinner board) lines
+    |> List.foldl (\player acc ->
+        if acc /= Nobody then acc else player) Nobody
+
 
 updateBoard: Board -> Player -> Int -> Board
 updateBoard board current_player position =
@@ -48,21 +125,29 @@ showPlayer player =
 
 
 showPlayerButton : Int -> Int -> Player -> Html Msg
-showPlayerButton offset position player = button [ onClick {position=position+offset}] [text (showPlayer player)]
+showPlayerButton offset position player = button [ onClick (Position (position+offset))] [text (showPlayer player)]
 
 
 showPlayerRow : Int-> Array Player -> Html Msg
 showPlayerRow offset row = div [] <| List.indexedMap (showPlayerButton offset) (toList row)
 
 
+showWinner : Player -> Html Msg
+showWinner winner = 
+    case winner of 
+        Nobody -> div [] [text "Nobody won yet"]
+        Me -> div [] [text "You Win"]
+        Opponent -> div [] [text "I Win"]
+
+
 view : Model -> Html Msg
 view model =
         div [] [
+                showWinner model.winner,
                 showPlayerRow 0 (slice 0 3 model.board),
                 showPlayerRow 3 (slice 3 6 model.board),
                 showPlayerRow 6 (slice 6 9 model.board)
                 ]
-
 
 
 emptyIndices: Board -> EmptyIndices
@@ -156,13 +241,49 @@ aiMove currentPlayer values board =
     a |>  boardFromIndex
 
 
-defaultValues : TrainedValues
-defaultValues =
-    repeat (3^9) 0.0
+-- defaultValues : TrainedValues
+-- defaultValues =
+--     repeat (3^9) 0.0
+
+
+--- get default values
+
+
+getTrainedValues : Cmd Msg
+getTrainedValues =
+  let
+    url =
+      "/values.json"
+  in
+    Http.send FetchedValues (Http.get url decodeInitialValues)
+
+
+decodeInitialValues : Decode.Decoder TrainedValues
+decodeInitialValues =
+    Decode.at [] <| Decode.array Decode.float
+
+
+init : (Model, Cmd Msg)
+init = (
+    {board=repeat board_size Nobody, 
+        values=repeat (3^9) 0.0,
+        winner=Nobody},
+    getTrainedValues
+    )
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
+
 
 main =
-  Html.beginnerProgram
-    { model = model
+  Html.program
+    { init = init
     , view = view
     , update = update
+    , subscriptions = subscriptions
     }
