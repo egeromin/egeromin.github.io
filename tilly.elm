@@ -5,8 +5,6 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
 
-import DefaultValues2
-
 type Player =
     Me | Opponent | Nobody
 
@@ -37,7 +35,7 @@ update_position to_update substitute i current =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg {board, values, winner} =
     
-    if winner /= Nobody then 
+    if haveWinnerOrDraw board then 
         ({board=board, values=values, winner=winner}, Cmd.none)
     else
     case msg of 
@@ -45,7 +43,7 @@ update msg {board, values, winner} =
             let
                 newBoard=updateBoard board Me position
                 |>
-                    aiMove Opponent values
+                    aiMoveIfPossible Opponent values
             in
             (
                 {
@@ -59,6 +57,24 @@ update msg {board, values, winner} =
             ({board=board, values=newValues, winner=winner}, Cmd.none)
         _ -> ({board=board, values=values, winner=winner}, Cmd.none)
 
+
+
+haveWinnerOrDraw :  Board -> Bool
+haveWinnerOrDraw board =
+    if (findWinner board) /= Nobody then True
+    else haveDraw board
+
+
+haveDraw : Board -> Bool
+haveDraw board = 
+    List.all (\x -> x /= Nobody) <| Array.toList board
+
+
+aiMoveIfPossible : Player -> TrainedValues -> Board -> Board
+aiMoveIfPossible currentPlayer values board =
+    if haveWinnerOrDraw board then board
+    else
+        aiMove currentPlayer values board
 
 
 type alias Line = List Int
@@ -132,10 +148,13 @@ showPlayerRow : Int-> Array Player -> Html Msg
 showPlayerRow offset row = div [] <| List.indexedMap (showPlayerButton offset) (toList row)
 
 
-showWinner : Player -> Html Msg
-showWinner winner = 
+showWinner : Board -> Player -> Html Msg
+showWinner board winner = 
+    if haveDraw board then
+        div [] [text "Draw"]
+    else
     case winner of 
-        Nobody -> div [] [text "Nobody won yet"]
+        Nobody -> div [] [text "Tic Tac Toe"]
         Me -> div [] [text "You Win"]
         Opponent -> div [] [text "I Win"]
 
@@ -143,7 +162,7 @@ showWinner winner =
 view : Model -> Html Msg
 view model =
         div [] [
-                showWinner model.winner,
+                showWinner model.board model.winner,
                 showPlayerRow 0 (slice 0 3 model.board),
                 showPlayerRow 3 (slice 3 6 model.board),
                 showPlayerRow 6 (slice 6 9 model.board)
