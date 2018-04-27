@@ -30,7 +30,16 @@ type Msg =
 
 update_position : Int -> Player -> Int -> Player -> Player
 update_position to_update substitute i current =
-    if to_update == i then substitute else current
+    if to_update == i && current == Nobody then substitute else current
+
+is_position_free : Board -> Int -> Bool
+is_position_free board position = 
+    let
+        current_value = getValueFromArrayWithDefault board Me position
+    in
+        current_value == Nobody
+
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg {board, values, winner} =
@@ -41,9 +50,12 @@ update msg {board, values, winner} =
     case msg of 
         Position position ->
             let
-                newBoard=updateBoard board Me position
-                |>
-                    aiMoveIfPossible Opponent values
+                newBoard= 
+                    if is_position_free board position then
+                        updateBoard board Me position
+                        |>
+                            aiMoveIfPossible Opponent values
+                    else board
             in
             (
                 {

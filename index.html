@@ -9231,9 +9231,15 @@ var _user$project$Main$lines = {
 		}
 	}
 };
+var _user$project$Main$board_size = 9;
+var _user$project$Main$Model = F3(
+	function (a, b, c) {
+		return {board: a, values: b, winner: c};
+	});
+var _user$project$Main$Nobody = {ctor: 'Nobody'};
 var _user$project$Main$update_position = F4(
 	function (to_update, substitute, i, current) {
-		return _elm_lang$core$Native_Utils.eq(to_update, i) ? substitute : current;
+		return (_elm_lang$core$Native_Utils.eq(to_update, i) && _elm_lang$core$Native_Utils.eq(current, _user$project$Main$Nobody)) ? substitute : current;
 	});
 var _user$project$Main$updateBoard = F3(
 	function (board, current_player, position) {
@@ -9249,12 +9255,6 @@ var _user$project$Main$filledBoards = F3(
 			A2(_user$project$Main$updateBoard, board, currentPlayer),
 			emptyIndices);
 	});
-var _user$project$Main$board_size = 9;
-var _user$project$Main$Model = F3(
-	function (a, b, c) {
-		return {board: a, values: b, winner: c};
-	});
-var _user$project$Main$Nobody = {ctor: 'Nobody'};
 var _user$project$Main$haveDraw = function (board) {
 	return A2(
 		_elm_lang$core$List$all,
@@ -9387,6 +9387,11 @@ var _user$project$Main$nextStates = F2(
 	});
 var _user$project$Main$Opponent = {ctor: 'Opponent'};
 var _user$project$Main$Me = {ctor: 'Me'};
+var _user$project$Main$is_position_free = F2(
+	function (board, position) {
+		var current_value = A3(_user$project$Main$getValueFromArrayWithDefault, board, _user$project$Main$Me, position);
+		return _elm_lang$core$Native_Utils.eq(current_value, _user$project$Main$Nobody);
+	});
 var _user$project$Main$playerFromInt = function ($int) {
 	var _p7 = $int;
 	switch (_p7) {
@@ -9440,28 +9445,29 @@ var _user$project$Main$aiMoveIfPossible = F3(
 var _user$project$Main$update = F2(
 	function (msg, _p8) {
 		var _p9 = _p8;
-		var _p13 = _p9.winner;
-		var _p12 = _p9.values;
-		var _p11 = _p9.board;
-		if (_user$project$Main$haveWinnerOrDraw(_p11)) {
+		var _p14 = _p9.winner;
+		var _p13 = _p9.values;
+		var _p12 = _p9.board;
+		if (_user$project$Main$haveWinnerOrDraw(_p12)) {
 			return {
 				ctor: '_Tuple2',
-				_0: {board: _p11, values: _p12, winner: _p13},
+				_0: {board: _p12, values: _p13, winner: _p14},
 				_1: _elm_lang$core$Platform_Cmd$none
 			};
 		} else {
 			var _p10 = msg;
 			if (_p10.ctor === 'Position') {
-				var newBoard = A3(
+				var _p11 = _p10._0;
+				var newBoard = A2(_user$project$Main$is_position_free, _p12, _p11) ? A3(
 					_user$project$Main$aiMoveIfPossible,
 					_user$project$Main$Opponent,
-					_p12,
-					A3(_user$project$Main$updateBoard, _p11, _user$project$Main$Me, _p10._0));
+					_p13,
+					A3(_user$project$Main$updateBoard, _p12, _user$project$Main$Me, _p11)) : _p12;
 				return {
 					ctor: '_Tuple2',
 					_0: {
 						board: newBoard,
-						values: _p12,
+						values: _p13,
 						winner: _user$project$Main$findWinner(newBoard)
 					},
 					_1: _elm_lang$core$Platform_Cmd$none
@@ -9470,13 +9476,13 @@ var _user$project$Main$update = F2(
 				if (_p10._0.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
-						_0: {board: _p11, values: _p10._0._0, winner: _p13},
+						_0: {board: _p12, values: _p10._0._0, winner: _p14},
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
 					return {
 						ctor: '_Tuple2',
-						_0: {board: _p11, values: _p12, winner: _p13},
+						_0: {board: _p12, values: _p13, winner: _p14},
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
