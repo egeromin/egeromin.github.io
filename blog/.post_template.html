@@ -1,0 +1,29 @@
+<html>
+<head>
+<link rel="stylesheet" href="/blog/tufte.css" />
+<script
+src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML'
+async></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  // skipTags: ["<pre>", "<code>"]
+  tex2jax: {
+      skipTags: ["script","noscript","style","textarea"]
+      }
+  });
+</script>
+<title>{{title}}</title>
+</head>
+<body>
+    <p><a href={{index_url}}>To index</a></p>
+
+    {{article}}
+
+    <p><a href={{index_url}}>To index</a></p>
+
+    <div class="dates">
+        First published {{as-date first_published}}, <br />
+        last updated {{as-date last_updated}}.
+    </div>
+</body>
+</html>
