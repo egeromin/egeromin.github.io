@@ -1,18 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="2.0" 
+    xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+    xmlns:dc="http://purl.org/dc/elements/1.1/" 
+    xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         
 		<title>Emanuel's Blog</title>
-		<link>https://emanuelgeromin.com/</link>
+		<link>https://emanuelgeromin.com/blog/</link>
         <description>Judge all you like, it won't change a thing</description>
+        <atom:link href="https://emanuelgeromin.com/blog/rss.xml" rel="self" type="application/rss+xml" />
         
+        
+        <item>
+            <title>TITLE</title>
+            <link>https://emanuelgeromin.com/blog/draft-post-2/</link>
+            <guid>https://emanuelgeromin.com/blog/draft-post-2/</guid>
+            <dc:creator>Emanuel Geromin</dc:creator>
+            <pubDate>Fri, 28 Sep 2018 14:53:41 GMT</pubDate>
+        </item>
         
         <item>
             <title>Asynchronous Programming and Microservices: Comparing Javascript, Erlang and Python with RabbitMQ + Celery</title>
             <link>https://emanuelgeromin.com/blog/async-programming-rabbitmq-celery-erlang/</link>
-            <author>Emanuel Geromin</author>
-            <pubDate>Thu, 27 Sep 2018 16:36:54 UTC</pubDate>
+            <guid>https://emanuelgeromin.com/blog/async-programming-rabbitmq-celery-erlang/</guid>
+            <dc:creator>Emanuel Geromin</dc:creator>
+            <pubDate>Thu, 27 Sep 2018 16:36:54 GMT</pubDate>
         </item>
         
     </channel>
 </rss>
+
