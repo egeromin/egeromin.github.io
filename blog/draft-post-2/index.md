@@ -86,10 +86,11 @@ The learning problem thus breaks into 2 parts:
   action at a given state given our current strategy. We want to learn the
   value function `\(q_{\pi}: A \times S \to \mathbb{R}\)`, a function from
   state-action pairs to real numbers. The subscript `\(\pi\)` indicates the
-  fact that this function depends on our current policy.
+  fact that this function depends on our current policy. This is also known as
+  the *prediction* problem, because we are predicting the values.
 - *policy iteration*, which is about updating our policy based on our value
   estimates. We update our policy to choose at each stage the best action given
-  our current value estimate.
+  our current value estimate. This is also known as the *control* problem.
 
 Finding an ideal policy is an iterative process, which involves repeating these
 steps over and over again. We start with a random policy and calculate the
@@ -119,12 +120,69 @@ take longer to find it: slower convergence. This is a tradeoff between
 exploration and exploitation and has the fancy name *exploration-exploitation
 tradeoff.* 
 
+
+These are all the components we need to implement our reinforcement learning
+algorithm. Here they are again:
+
+- An *initial policy* `\(\pi\)` to start racing. In our case, this is the random policy.
+- A method to produce *value estimates* `\(q_\pi\)` for any given policy. These assign a
+  score to each action at each state. 
+  In our case, this is the Monte Carlo method.
+- A way to perform *policy iteration*, in other words to update an existing
+  policy `\(\pi\)` and produce an improved policy `\(\pi'\)` using the value
+  estimates `\(q_\pi\)`. What we do is a variant of *general policy iteration*, 
+  and we update the policy after each *episode*. An *episode* is one run of the
+  game: one run of Pimi on the racetrack. And we improve by defining our policy
+  to use the action with the *highest* value estimate at each state 90% of the
+  time. The remaining 10% of the time we try out random actions to retain a
+  healthy amount of exploration. 
+
+So far the policy was a function from states to actions. We can also write it
+as a funcion 
+`\(\pi(a|s) := \pi(a, s)\)` from state-action pairs to the real numbers. In
+this case we interpret the policy
+to be a *probability distribution* over `\(a\)` from which we can sample. It's
+a probability distribution and so `\(\sum_a \pi(a|s) = 1 \)` for all `\(s\)`.
+
+That's a lot of words. Here's some pseudocode to make things clearer{adapted
+from Barto and Sutton, X, Y}. 
+
+1. Choose a small exploration parameter `\(\epsilon\)`, for example 0.1
+1. Set the initial policy `\(\pi\)` to be the random policy
+1. Initialise our value estimates arbitrarily: set `\(Q(s, a) \in \mathbb{R}\)`
+  arbitrarily for all `\(a\)` in `\(A\)`, `\(s\)` in `\(S\)`.
+1. `\(\text{Returns}(s, a) \leftarrow \)` empty list, for all `\(a\)` in `\(A\)`, `\(s\)` in `\(S\)`. These *returns* are the entries in our 'success logbooks'.
+1. Repeat forever:
+    1. Generate an episode according to `\(\pi: S_0, A_0, S_1, A_1 \ldots S_T\)`. This is one run across the racetrack until we hit the green finish line. 
+    1. `\(G \leftarrow 0\)`
+    1. Loop for each episode, `\(T=t-1, t-2, \ldots 0\)`
+        1. `\(G \leftarrow G+1\)`
+        1. If the pair `\((S_t, A_t)\)` does **not** appear in `\((S_0, A_0), (S_1, 
+           A_1), \ldots (S_{t-1}, A_{t-1})\)`:{this condition gives what's
+           called *first-visit Monte Carlo*. This is one variant of Monte Carlo
+           prediction. Another is *multiple visits*, which does not have this
+           extra 'if' condition.}
+           1. Append `\(G\)` to Returns`\((s, a)\)`.
+           1. `\(Q(S_t, A_t) \leftarrow \)` average(Returns(`\(S_t, A_t\)`))
+           1. `\(A* \leftarrow \text{arg max}_a Q(S_t, a)\)`. Break ties
+              arbitrarily.
+           1. For all `\(a \in A(S_t)\)`, where `\(A(S_t)\)` is the set of
+              possible actions we can take at `\(S_t\)`:
+
+              ```
+              \[
+              \pi(a|S_t) \leftarrow = \begin{cases}
+                  1 - \epsilon + \epsilon / |A(S_t)| & \text{if } a = A* \\
+                  \epsilon / |A(S_t)| & \text{otherwise}
+              \end{cases}
+              \]
+              ```
+
 I've implemented a Monte Carlo algorithm for the racetrack and here are my
 results:
 
 INSERT IMAGE
 
 The implementation is on [GitHub](bla) and I encourage you to take a look.
-The main components are here:
-
+Let's zoom in and take a closer look at the most important parts.
 

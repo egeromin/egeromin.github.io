@@ -1,18 +1,16 @@
 <html>
 <head>
-<link rel="stylesheet" href="/blog/tufte.css" />
+<link rel="stylesheet" href="/blog/toc.css" />
 </head>
 <body>
-    <article>
     <h1>Contents</h1>
     <ul>
 {{#each index}}
         <li>
-            <a href="{{post_url}}">{{title}}</a>, 
-            {{as-date first_published}}
+            <a href="{{post_url}}">{{title}}</a><br />
+            <span class="datetime">{{as-date first_published}}</span>
         </li>
 {{/each}}
     </ul>
-    </article>
 </body>
 </html>

@@ -97,10 +97,11 @@ The learning problem thus breaks into 2 parts:</p>
 action at a given state given our current strategy. We want to learn the
 value function <code>\(q_{\pi}: A \times S \to \mathbb{R}\)</code>, a function from
 state-action pairs to real numbers. The subscript <code>\(\pi\)</code> indicates the
-fact that this function depends on our current policy.</li>
+fact that this function depends on our current policy. This is also known as
+the <em>prediction</em> problem, because we are predicting the values.</li>
 <li><em>policy iteration</em>, which is about updating our policy based on our value
 estimates. We update our policy to choose at each stage the best action given
-our current value estimate.</li>
+our current value estimate. This is also known as the <em>control</em> problem.</li>
 </ul>
 <p>Finding an ideal policy is an iterative process, which involves repeating these
 steps over and over again. We start with a random policy and calculate the
@@ -129,18 +130,90 @@ thumb, a higher value of <code>\(\epsilon\)</code> can lead to a better policy, 
 take longer to find it: slower convergence. This is a tradeoff between
 exploration and exploitation and has the fancy name <em>exploration-exploitation
 tradeoff.</em></p>
+<p>These are all the components we need to implement our reinforcement learning
+algorithm. Here they are again:</p>
+<ul>
+<li>An <em>initial policy</em> <code>\(\pi\)</code> to start racing. In our case, this is the random policy.</li>
+<li>A method to produce <em>value estimates</em> <code>\(q_\pi\)</code> for any given policy. These assign a
+score to each action at each state.
+In our case, this is the Monte Carlo method.</li>
+<li>A way to perform <em>policy iteration</em>, in other words to update an existing
+policy <code>\(\pi\)</code> and produce an improved policy <code>\(\pi'\)</code> using the value
+estimates <code>\(q_\pi\)</code>. What we do is a variant of <em>general policy iteration</em>,
+and we update the policy after each <em>episode</em>. An <em>episode</em> is one run of the
+game: one run of Pimi on the racetrack. And we improve by defining our policy
+to use the action with the <em>highest</em> value estimate at each state 90% of the
+time. The remaining 10% of the time we try out random actions to retain a
+healthy amount of exploration.</li>
+</ul>
+<p>So far the policy was a function from states to actions. We can also write it
+as a funcion
+<code>\(\pi(a|s) := \pi(a, s)\)</code> from state-action pairs to the real numbers. In
+this case we interpret the policy
+to be a <em>probability distribution</em> over <code>\(a\)</code> from which we can sample. It's
+a probability distribution and so <code>\(\sum_a \pi(a|s) = 1 \)</code> for all <code>\(s\)</code>.</p>
+<p>That's a lot of words. Here's some pseudocode to make things clearer<label class="sidenote-number"></label><span class="sidenote">adapted
+from Barto and Sutton, X, Y</span>.</p>
+<ol>
+<li>Choose a small exploration parameter <code>\(\epsilon\)</code>, for example 0.1</li>
+<li>Set the initial policy <code>\(\pi\)</code> to be the random policy</li>
+<li>Initialise our value estimates arbitrarily: set <code>\(Q(s, a) \in \mathbb{R}\)</code>
+arbitrarily for all <code>\(a\)</code> in <code>\(A\)</code>, <code>\(s\)</code> in <code>\(S\)</code>.</li>
+<li><code>\(\text{Returns}(s, a) \leftarrow \)</code> empty list, for all <code>\(a\)</code> in <code>\(A\)</code>, <code>\(s\)</code> in <code>\(S\)</code>. These <em>returns</em> are the entries in our 'success logbooks'.</li>
+<li>Repeat forever:
+<ol>
+<li>Generate an episode according to <code>\(\pi: S_0, A_0, S_1, A_1 \ldots S_T\)</code>. This is one run across the racetrack until we hit the green finish line.</li>
+<li><code>\(G \leftarrow 0\)</code></li>
+<li>Loop for each episode, <code>\(T=t-1, t-2, \ldots 0\)</code>
+<ol>
+<li><code>\(G \leftarrow G+1\)</code></li>
+<li>If the pair <code>\((S_t, A_t)\)</code> does <strong>not</strong> appear in <code>\((S_0, A_0), (S_1, A_1), \ldots (S_{t-1}, A_{t-1})\)</code>:<label class="sidenote-number"></label><span class="sidenote">this condition gives what's
+called <em>first-visit Monte Carlo</em>. This is one variant of Monte Carlo
+prediction. Another is <em>multiple visits</em>, which does not have this
+extra 'if' condition.</span>
+<ol>
+<li>
+<p>Append <code>\(G\)</code> to Returns<code>\((s, a)\)</code>.</p>
+</li>
+<li>
+<p><code>\(Q(S_t, A_t) \leftarrow \)</code> average(Returns(<code>\(S_t, A_t\)</code>))</p>
+</li>
+<li>
+<p><code>\(A* \leftarrow \text{arg max}_a Q(S_t, a)\)</code>. Break ties
+arbitrarily.</p>
+</li>
+<li>
+<p>For all <code>\(a \in A(S_t)\)</code>, where <code>\(A(S_t)\)</code> is the set of
+possible actions we can take at <code>\(S_t\)</code>:</p>
+<pre><code class="code">\[
+\pi(a|S_t) \leftarrow = \begin{cases}
+    1 - \epsilon + \epsilon / |A(S_t)| &amp; \text{if } a = A* \\
+    \epsilon / |A(S_t)| &amp; \text{otherwise}
+\end{cases}
+\]
+</code></pre>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<pre><code class="code">
+</code></pre>
 <p>I've implemented a Monte Carlo algorithm for the racetrack and here are my
 results:</p>
 <p>INSERT IMAGE</p>
 <p>The implementation is on <a href="/blog/draft-post-2/bla">GitHub</a> and I encourage you to take a look.
-The main components are here:</p>
+Let's zoom in and take a closer look at the most important parts.</p>
 </section></article>
 
     <p><a href=/blog/>To index</a></p>
 
     <div class="dates">
         First published 28 September 2018 at 14:53 UTC, <br />
-        last updated 30 September 2018 at 14:41 UTC.
+        last updated 01 October 2018 at 11:17 UTC.
     </div>
 </body>
 </html>
