@@ -15,15 +15,20 @@ MathJax.Hub.Config({
 <title>{{title}}</title>
 </head>
 <body>
-    <p><a href={{index_url}}>To index</a></p>
+    <p>
+        <a href="{{index_url}}">&lt;Index</a>
+        <a href="{{index_url}}rss.xml">RSS</a>
+        <a href="/">Home</a>
+    </p>
 
     {{article}}
-
-    <p><a href={{index_url}}>To index</a></p>
 
     <div class="dates">
         First published {{as-date first_published}}, <br />
         last updated {{as-date last_updated}}.
+    </div>
+
+    <div class="footer">
     </div>
 </body>
 </html>
