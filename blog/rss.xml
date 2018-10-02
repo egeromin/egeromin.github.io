@@ -12,14 +12,6 @@
         
         
         <item>
-            <title>TITLE</title>
-            <link>https://emanuelgeromin.com/blog/draft-post-2/</link>
-            <guid>https://emanuelgeromin.com/blog/draft-post-2/</guid>
-            <dc:creator>Emanuel Geromin</dc:creator>
-            <pubDate>Fri, 28 Sep 2018 14:53:41 GMT</pubDate>
-        </item>
-        
-        <item>
             <title>Asynchronous Programming and Microservices: Comparing Javascript, Erlang and Python with RabbitMQ + Celery</title>
             <link>https://emanuelgeromin.com/blog/async-programming-rabbitmq-celery-erlang/</link>
             <guid>https://emanuelgeromin.com/blog/async-programming-rabbitmq-celery-erlang/</guid>
