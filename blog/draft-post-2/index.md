@@ -10,11 +10,14 @@
 -- nice intro--
 
 
+## Monte Carlo RL: The Racetrack
+
+
 Let's get up to speed with an example: racetrack driving{taken from Sutton and
 Barto, *reinforcement learning*, Chapter X, etc}. We'll take the famous Formula 1 
 racing driver Pimi Roverlainen and transplant him onto a racetrack in gridworld.
 
-INSERT IMAGE
+![racetrack-example](bla-link)
 
 Pimi's task is to learn how to drive from any given point on the red starting line to any
 point of his choice on the green ending line. He should do this as quickly as
@@ -178,11 +181,151 @@ from Barto and Sutton, X, Y}.
               \]
               ```
 
-I've implemented a Monte Carlo algorithm for the racetrack and here are my
+
+## RaceTrack Implementation
+
+I've implemented a Monte Carlo algorithm in [Julia](bla-link)
+for the racetrack and here are my
 results:
 
-INSERT IMAGE
+![racetrack-result](bla-link)
 
-The implementation is on [GitHub](bla) and I encourage you to take a look.
+The implementation is on [GitHub](bla-link) and I encourage you to take a look.
 Let's zoom in and take a closer look at the most important parts.
+
+
+```julia
+"""
+On-policy monte-carlo control
+"""
+function monte_carlo_control(track::Track, num_episodes::Int, eps::Float64)
+
+    qval = QValues()
+    returns = StateActionReturns()
+
+    episode_lengths = []
+
+    for i in 1:num_episodes
+        episode = generate_episode(track, eps, qval)
+        @assert isa(episode, Episode)
+        qval = update_state_returns!(episode, eps, returns, track)
+        push!(episode_lengths, length(episode))
+
+        if i % 1000 == 0
+            println(@sprintf "Done %i of %i; episode length %i" i num_episodes length(episode))
+        end
+    end
+
+    return qval, episode_lengths
+end
+```
+
+
+This is the heart of the algorithm: our control loop. Our policy is determined
+by a table of Q-Values. This is our function `\(q_\pi\)` from before. We
+populate our table by setting every entry to zero, so `\(q_\pi(s, a) = 0\)` for
+all `\(s, a\)`. This is done by `qval = QValues()`. We also initialise our
+empty lists of returns for each state action pair `returns = StateActionReturns()`.
+Then we loop over a fixed number of episodes. In the pseudocode, this is an
+infinite loop. At each stage, we generate a new episode given our current
+qvalues: `episode = generate_episode(track, eps, qval)`. Then we update our
+qvalues and our return lists: `qval = update_state_returns!(episode, eps,
+returns track)`. This updates our policy.
+
+The control loop splits into 2 core ingredients. The first core ingredient is the `generate_episode`
+function which generates an episode. The second is the `update_state_returns!` function
+which take an episode and use it to update the returns lists. 
+
+
+```julia
+function generate_episode(track::Track, eps::Float64, q::QValues)
+
+    episode::Episode = []
+    state = random_start(track)
+
+    for i in 1:max_episode_length
+        action = epsilon_greedy(eps, q, state)
+        push!(episode, (state, action))
+
+        state = next_state(track, state, action)
+
+        if state == TerminalState
+            break
+        end
+    end
+
+    push!(episode, (state, NoAction))
+
+    return episode
+
+end
+
+
+function update_state_returns!(episode::Episode, eps::Float64,
+                               r::StateActionReturns,
+                               track::Track,
+                               first_visit::Bool=true)
+
+    current_return::Float64 = 0
+    state, _ = episode[end]
+
+    for i in length(episode)-1:-1:1
+        if state != TerminalState && track[state.position...] == red
+            current_return += -50
+        else
+            current_return += -1
+        end
+        state, action = episode[i]  
+
+        if !((state, action) in episode[1:i-1]) || (!first_visit)
+            push!(r[state, action], current_return)
+        end
+    end
+
+    QValues(map(mean, r.r))
+end
+```
+
+These 2 functions follow the pseudocode almost exactly, with the exception that
+in my implementation, I set an extra penalty for crashing (-50 instead of just
+-1). The `generate_episode` function relies on 2 helper functions,
+`epsilon_greedy`, which is the policy function, selecting an action given our
+qvalues, and `next_state`, which evaluates the next state given what the
+current state and action are and what the track shape is. I won't cover
+`next_state` here in detail. It involves checking if we've hit the boundary
+of the track and computing the next position given our current velocity.
+`epsilon_greedy` is quite straightforward and you can check it directly in the
+code. 
+
+
+
+## Temporal Difference RL: Tic Tac Toe
+
+
+Monte Carlo learning is simple and intuitive. To perform value prediction, we
+run a bunch of trials and average the returns over all these trials to obtain
+our estimate. 
+
+The method has a major drawback though: it takes up a huge amount of RAM. We
+have to store all these success logbooks which fill up as Pimi races around the
+track.  We have to store a return for each state-action pair
+crossed in every episode. In fact, we rely on having a long list of returns for
+each state-action pair because it will increase the accuracy of our estimate.
+The drawback of this method is the amount of memory it requires. The greater
+the accuracy, the greater the memory required. 
+
+An alternative class of algorithms are *temporal-difference (TD) algorithms*, which
+we'll explore using a different example: Tic-Tac-Toe. Using a TD algorithm, we
+can train an AI to play Tic Tac Toe. The AI learns by playing itself. 
+
+I've written an implementation in Julia which you can find [on
+GitHub](bla-link). The result is a trained Tic-Tac-Toe AI which you can play:
+
+<div id="app"></div>
+
+<script src="/tilly.js"></script>
+<script>
+	var node = document.getElementById("app");
+	var app = Elm.Main.embed(node);
+</script>
 

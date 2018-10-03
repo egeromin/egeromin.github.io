@@ -1,13 +1,21 @@
 html {font-size: 14px;}
 
 body {
-    margin: auto;
-    width: 50%;
     background-color: #fffff8;
     color: #111;
     font-size: 1.4rem;
     line-height: 2.0rem;
+    width: 100%;
 }
+
+
+@media only screen and (min-width: 800px) {
+    body {
+        width: 800px;
+        margin: auto;
+    }
+}
+
 
 h1 {
     display: flex;
@@ -17,6 +25,7 @@ h1 {
     margin-bottom: 4rem;
     font-size: 4rem;
     font-weight: 400;
+    white-space: nowrap;
 }
 
 a:link, a:visited { 

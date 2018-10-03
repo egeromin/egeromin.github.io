@@ -1,6 +1,7 @@
 <html>
 <head>
 <link rel="stylesheet" href="/blog/tufte.css" />
+<link rel="stylesheet" href="/blog/draft-post-2/article.css" />
 <script
 src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML'
 async></script>
@@ -31,10 +32,11 @@ MathJax.Hub.Config({
 <li>when there are too many states: give some examples, including mastermind</li>
 </ul>
 <p>-- nice intro--</p>
+<h2>Monte Carlo RL: The Racetrack</h2>
 <p>Let's get up to speed with an example: racetrack driving<label class="sidenote-number"></label><span class="sidenote">taken from Sutton and
 Barto, <em>reinforcement learning</em>, Chapter X, etc</span>. We'll take the famous Formula 1
 racing driver Pimi Roverlainen and transplant him onto a racetrack in gridworld.</p>
-<p>INSERT IMAGE</p>
+<p><img src="/blog/draft-post-2/bla-link" alt="" /><br /><span class="image-caption">racetrack-example</span></p>
 <p>Pimi's task is to learn how to drive from any given point on the red starting line to any
 point of his choice on the green ending line. He should do this as quickly as
 possible. We'll model Pimi's driving in a simplified way: namely as a sequence
@@ -204,16 +206,133 @@ possible actions we can take at <code>\(S_t\)</code>:</p>
 </ol>
 </li>
 </ol>
-<p>I've implemented a Monte Carlo algorithm for the racetrack and here are my
+<h2>RaceTrack Implementation</h2>
+<p>I've implemented a Monte Carlo algorithm in <a href="/blog/draft-post-2/bla-link">Julia</a>
+for the racetrack and here are my
 results:</p>
-<p>INSERT IMAGE</p>
-<p>The implementation is on <a href="/blog/draft-post-2/bla">GitHub</a> and I encourage you to take a look.
+<p><img src="/blog/draft-post-2/bla-link" alt="" /><br /><span class="image-caption">racetrack-result</span></p>
+<p>The implementation is on <a href="/blog/draft-post-2/bla-link">GitHub</a> and I encourage you to take a look.
 Let's zoom in and take a closer look at the most important parts.</p>
+<pre><code class="code">&quot;&quot;&quot;
+On-policy monte-carlo control
+&quot;&quot;&quot;
+function monte_carlo_control(track::Track, num_episodes::Int, eps::Float64)
+
+    qval = QValues()
+    returns = StateActionReturns()
+
+    episode_lengths = []
+
+    for i in 1:num_episodes
+        episode = generate_episode(track, eps, qval)
+        @assert isa(episode, Episode)
+        qval = update_state_returns!(episode, eps, returns, track)
+        push!(episode_lengths, length(episode))
+
+        if i % 1000 == 0
+            println(@sprintf &quot;Done %i of %i; episode length %i&quot; i num_episodes length(episode))
+        end
+    end
+
+    return qval, episode_lengths
+end
+</code></pre>
+<p>This is the heart of the algorithm: our control loop. Our policy is determined
+by a table of Q-Values. This is our function <code>\(q_\pi\)</code> from before. We
+populate our table by setting every entry to zero, so <code>\(q_\pi(s, a) = 0\)</code> for
+all <code>\(s, a\)</code>. This is done by <code>qval = QValues()</code>. We also initialise our
+empty lists of returns for each state action pair <code>returns = StateActionReturns()</code>.
+Then we loop over a fixed number of episodes. In the pseudocode, this is an
+infinite loop. At each stage, we generate a new episode given our current
+qvalues: <code>episode = generate_episode(track, eps, qval)</code>. Then we update our
+qvalues and our return lists: <code>qval = update_state_returns!(episode, eps, returns track)</code>. This updates our policy.</p>
+<p>The control loop splits into 2 core ingredients. The first core ingredient is the <code>generate_episode</code>
+function which generates an episode. The second is the <code>update_state_returns!</code> function
+which take an episode and use it to update the returns lists.</p>
+<pre><code class="code">function generate_episode(track::Track, eps::Float64, q::QValues)
+
+    episode::Episode = []
+    state = random_start(track)
+
+    for i in 1:max_episode_length
+        action = epsilon_greedy(eps, q, state)
+        push!(episode, (state, action))
+
+        state = next_state(track, state, action)
+
+        if state == TerminalState
+            break
+        end
+    end
+
+    push!(episode, (state, NoAction))
+
+    return episode
+
+end
+
+
+function update_state_returns!(episode::Episode, eps::Float64,
+                               r::StateActionReturns,
+                               track::Track,
+                               first_visit::Bool=true)
+
+    current_return::Float64 = 0
+    state, _ = episode[end]
+
+    for i in length(episode)-1:-1:1
+        if state != TerminalState &amp;&amp; track[state.position...] == red
+            current_return += -50
+        else
+            current_return += -1
+        end
+        state, action = episode[i]  
+
+        if !((state, action) in episode[1:i-1]) || (!first_visit)
+            push!(r[state, action], current_return)
+        end
+    end
+
+    QValues(map(mean, r.r))
+end
+</code></pre>
+<p>These 2 functions follow the pseudocode almost exactly, with the exception that
+in my implementation, I set an extra penalty for crashing (-50 instead of just
+-1). The <code>generate_episode</code> function relies on 2 helper functions,
+<code>epsilon_greedy</code>, which is the policy function, selecting an action given our
+qvalues, and <code>next_state</code>, which evaluates the next state given what the
+current state and action are and what the track shape is. I won't cover
+<code>next_state</code> here in detail. It involves checking if we've hit the boundary
+of the track and computing the next position given our current velocity.
+<code>epsilon_greedy</code> is quite straightforward and you can check it directly in the
+code.</p>
+<h2>Temporal Difference RL: Tic Tac Toe</h2>
+<p>Monte Carlo learning is simple and intuitive. To perform value prediction, we
+run a bunch of trials and average the returns over all these trials to obtain
+our estimate.</p>
+<p>The method has a major drawback though: it takes up a huge amount of RAM. We
+have to store all these success logbooks which fill up as Pimi races around the
+track.  We have to store a return for each state-action pair
+crossed in every episode. In fact, we rely on having a long list of returns for
+each state-action pair because it will increase the accuracy of our estimate.
+The drawback of this method is the amount of memory it requires. The greater
+the accuracy, the greater the memory required.</p>
+<p>An alternative class of algorithms are <em>temporal-difference (TD) algorithms</em>, which
+we'll explore using a different example: Tic-Tac-Toe. Using a TD algorithm, we
+can train an AI to play Tic Tac Toe. The AI learns by playing itself.</p>
+<p>I've written an implementation in Julia which you can find <a href="/blog/draft-post-2/bla-link">on
+GitHub</a>. The result is a trained Tic-Tac-Toe AI which you can play:</p>
+<div id="app"></div>
+<script src="/tilly.js"></script>
+<script>
+    var node = document.getElementById("app");
+    var app = Elm.Main.embed(node);
+</script>
 </section></article>
 
     <div class="dates">
         First published 03 October 2018 at 12:43 UTC, <br />
-        last updated 03 October 2018 at 12:43 UTC.
+        last updated 03 October 2018 at 15:11 UTC.
     </div>
 
     <div class="footer">
