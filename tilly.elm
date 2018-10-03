@@ -149,7 +149,7 @@ showPlayer player =
         case player of
                 Me -> "X"
                 Opponent -> "O"
-                _ -> "E"
+                _ -> "-"
 
 
 showPlayerButton : Int -> Int -> Player -> Html Msg
@@ -157,18 +157,18 @@ showPlayerButton offset position player = button [ onClick (Position (position+o
 
 
 showPlayerRow : Int-> Array Player -> Html Msg
-showPlayerRow offset row = div [] <| List.indexedMap (showPlayerButton offset) (toList row)
+showPlayerRow offset row = div [class "ticrow"] <| List.indexedMap (showPlayerButton offset) (toList row)
 
 
 showWinner : Board -> Player -> Html Msg
 showWinner board winner = 
     if haveDraw board then
-        div [] [text "Draw"]
+        div [class "result" ] [text "Draw"]
     else
     case winner of 
-        Nobody -> div [] [text "Tic Tac Toe"]
-        Me -> div [] [text "You Win"]
-        Opponent -> div [] [text "I Win"]
+        Nobody -> div [class "result"] [text "Tic Tac Toe"]
+        Me -> div [class "result" ] [text "You Win"]
+        Opponent -> div [class "result" ] [text "I Win"]
 
 
 view : Model -> Html Msg

@@ -12,6 +12,14 @@
         
         
         <item>
+            <title>A Brisk Intro to Reinforcement Learning</title>
+            <link>https://emanuelgeromin.com/blog/intro-reinforcement-learning-tic-tac-toe/</link>
+            <guid>https://emanuelgeromin.com/blog/intro-reinforcement-learning-tic-tac-toe/</guid>
+            <dc:creator>Emanuel Geromin</dc:creator>
+            <pubDate>Fri, 05 Oct 2018 09:21:58 GMT</pubDate>
+        </item>
+        
+        <item>
             <title>Asynchronous Programming and Microservices: Comparing Javascript, Erlang and Python with RabbitMQ + Celery</title>
             <link>https://emanuelgeromin.com/blog/async-programming-rabbitmq-celery-erlang/</link>
             <guid>https://emanuelgeromin.com/blog/async-programming-rabbitmq-celery-erlang/</guid>
