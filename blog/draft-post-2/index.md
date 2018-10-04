@@ -1,23 +1,23 @@
 # TITLE
 
-- learning from experience
-- driver first, using monte carlo methods
-- tic tac toe
-- driver
-- when there are too many states: give some examples, including mastermind
 
+How do humans learn? Unlike a successful [image classification
+pipeline](http://image-net.org/), humans do not require millions of labelled
+examples to distinguish chairs from tables. Instead, we learn by interacting
+with the environment, requiring no labelled supervision at all. How is this
+possible, and can it be replicated on a machine?
 
--- nice intro--
+This spring I had the privilege of attending [The Recurse
+Center](https://www.recurse.com/scout/click?t=ae23300ce9c535472ec760f1f5c34bab) in New York City and one of the topics I was keenest to explore is [reinforcement learning](https://en.wikipedia.org/wiki/Reinforcement_learning). Reinforcement learning algorithms teach *agents* by letting them interact with an *environment*, much like humans do. What do these algorithms look like?
 
 
 ## Monte Carlo RL: The Racetrack
 
 
-Let's get up to speed with an example: racetrack driving{taken from Sutton and
-Barto, *reinforcement learning*, Chapter X, etc}. We'll take the famous Formula 1 
+Let's get up to speed with an example: racetrack driving. We'll take the famous Formula 1 
 racing driver Pimi Roverlainen and transplant him onto a racetrack in gridworld.
 
-![racetrack-example](bla-link)
+![The idealised racetrack](racetrack-full-example.png)
 
 Pimi's task is to learn how to drive from any given point on the red starting line to any
 point of his choice on the green ending line. He should do this as quickly as
@@ -27,6 +27,11 @@ in either or both of the X and Y directions, giving a total of 9
 possibilities{(+1,+1), (+1, 0), (+1, -1), etc.}. His new velocity then
 determines in which square he'll end up next. For safety, let's cap both the
 X-speed and Y-speed at 5 units. 
+
+*This example is taken from the book "Reinforcement Learning" by Richard Sutton and
+Andrew Barto, 2018 Edition, Chapter 5.7, p111. I'll be referring to this book
+frequently and absolutely recommend it as an introduction to reinforcement
+learning.*
 
 We can write down our task using more formal terminology. Our task is to learn the best possible *action* in the given
 *state* we're in. In this case, a state is one of this possible cells in the
@@ -184,13 +189,15 @@ from Barto and Sutton, X, Y}.
 
 ## RaceTrack Implementation
 
-I've implemented a Monte Carlo algorithm in [Julia](bla-link)
+I've implemented a Monte Carlo algorithm in
+[Julia](https://julialang.org/)
 for the racetrack and here are my
 results:
 
-![racetrack-result](bla-link)
+![RaceTrack Result](racetrack.gif)
 
-The implementation is on [GitHub](bla-link) and I encourage you to take a look.
+The implementation is on
+[GitHub](https://github.com/egeromin/Reinforce.jl/blob/master/RaceTrack.jl) and I encourage you to take a look.
 Let's zoom in and take a closer look at the most important parts.
 
 
@@ -364,7 +371,7 @@ Monte Carlo algorithms and TD algorithms attempt to find solutions to
 *Bellman's equation*, an equation that an idealised value obeying certain
 conditions must satisfy. I won't cover this in detail, but it's at the heart of
 all reinforcement learning algorithms, so be sure to check out Sutton and
-Barto's book{chapter bla-link}.
+Barto's book{Section 3.5, page 58}.
 
 In the Tic-Tac-Toe case we can cut corners further by assigning values to
 *states* instead of *state-action pairs*. Whereas before we calculated a
@@ -391,9 +398,9 @@ cannot always do this is that general reinforcement learning policies are
 result of taking a certain action A from a state S can vary, even for exactly the same A and S.
 
 I've written an implementation of a TD algorithm for Tic-Tac-Toe in Julia which you can find [on
-GitHub](bla-link). 
+GitHub](https://github.com/egeromin/Reinforce.jl/blob/master/TicTacToe.jl). 
 
-Again we have a core training loop. Spot the updated update rule: bla-link
+Again we have a core training loop. Spot the updated update rule: 
 
 ```julia
 function play_game!(policy_me::Policy, policy_opponent::Policy)
@@ -446,7 +453,8 @@ function update!(policy::LearnerPolicy, last_index::Int)
 end
 ```
 
-I encourage you to take a look at the full code on GitHub. There I compare
+I encourage you to take a look at the full code [on
+GitHub](https://github.com/egeromin/Reinforce.jl/blob/master/TicTacToe.jl). There I compare
 training against 3 possible opponents:
 
 - a random opponent, which just makes random moves
@@ -468,7 +476,7 @@ browser:
 	var app = Elm.Main.embed(node);
 </script>
 
-This browser version is implemented [in Elm](bla-link). It uses a pre-trained
+This browser version is implemented [in Elm](http://elm-lang.org/). Check out the code [on GitHub](https://github.com/egeromin/egeromin.github.io/blob/master/tilly.elm). It uses a pre-trained
 model that was trained using the Julia code.
 
 
@@ -489,5 +497,5 @@ modelled to be a neural network. Different methods apply in those cases and I
 hope to cover them in a later blog post.
 
 That's all folks! For a much more comprehensive introduction to reinforcement
-learning algorithms, check out Sutton and Barto's book, which builds up the
-theory gradually from the ground up.
+learning algorithms, check out Sutton and Barto's book "Reinforcement
+Learning", 2018 Edition, which introduces the theory gradually from the ground up.
