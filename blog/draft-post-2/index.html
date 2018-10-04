@@ -320,19 +320,164 @@ the accuracy, the greater the memory required.</p>
 <p>An alternative class of algorithms are <em>temporal-difference (TD) algorithms</em>, which
 we'll explore using a different example: Tic-Tac-Toe. Using a TD algorithm, we
 can train an AI to play Tic Tac Toe. The AI learns by playing itself.</p>
-<p>I've written an implementation in Julia which you can find <a href="/blog/draft-post-2/bla-link">on
-GitHub</a>. The result is a trained Tic-Tac-Toe AI which you can play:</p>
+<p>The basic strategy is the same:</p>
+<ul>
+<li>We define a value function <code>\(q(a, s)\)</code> that is used to score the desirability of any
+state-action pair</li>
+<li>Our policy is again an <em><code>\(\epsilon\)</code>-greedy</em> policy based on the value
+function. It selects the best policy</li>
+<li>We play a number of tic-tac-toe games and, as we play, we update our value
+estimates based on what we've seen during each game.</li>
+</ul>
+<p>What changes is the last point: the strategy to update the value estimates.
+Whereas with Monte Carlo methods this required storing all of the returns
+following the first visit to a specific state-action pair, with TD-algorithms
+we have a cheaper method. Instead of storing all of the returns for every
+episode, we immediately update the q-values based only on the move that came
+<em>immediately after</em> the current one. So suppose when playing a game we have a
+sequence of states and actions <code>\(S_0, A_0, S_1, A_1, \ldots S_T\)</code>. Then we
+update the q-values at <code>\((S_i, A_i)\)</code> thus:</p>
+<pre><code class="code">\[
+Q(S_i, A_i) \leftarrow Q(S_i, A_i) + \alpha [R_{i+1} + Q(S_{i+1}, A_{i+1}) -
+Q(S_i, A_i)]
+\]
+</code></pre>
+<p>Here <code>\(\alpha\)</code> is a constant parameter, and <code>\(R_{i+1}\)</code> is called
+the <em>reward</em> following action <code>\(A_i\)</code>.
+Our <em>returns</em> for an episode at a given state-action pair are just the sum of rewards
+following that state-action pair. In the
+racetrack example, all of the rewards are set constant at -1, to incentivise
+faster runs. In my modified version there's an additional penalty for crashing
+because the reward is set to be -50 in that case, to disincentivise
+crashing. For Tic-Tac-Toe, we set the reward to be zero while the game is not
+finished and then:</p>
+<ul>
+<li>-1, for losing or drawing</li>
+<li>1, for winning</li>
+</ul>
+<p>The intuition behind this update rule is that the value will 'flow' between
+nodes of our state-action pair 'graph' until it reaches equilibrium. When we
+have equilibrium, we also have the 'true' ideal value. Of course, this
+explanation is disappointingly vague. What's actually going on is that both
+Monte Carlo algorithms and TD algorithms attempt to find solutions to
+<em>Bellman's equation</em>, an equation that an idealised value obeying certain
+conditions must satisfy. I won't cover this in detail, but it's at the heart of
+all reinforcement learning algorithms, so be sure to check out Sutton and
+Barto's book<label class="sidenote-number"></label><span class="sidenote">chapter bla-link</span>.</p>
+<p>In the Tic-Tac-Toe case we can cut corners further by assigning values to
+<em>states</em> instead of <em>state-action pairs</em>. Whereas before we calculated a
+function <code>\(Q(S, A)\)</code> for each valid <em>pair</em> <code>\((S, A)\)</code>, now we just
+calculate a <em>value function</em> <code>\(V(S)\)</code> for each possible state <code>\(S\)</code>.
+Our policy is still <code>\(\epsilon\)</code>-greedy with respect to <code>\(V\)</code>: it
+calculates all of the next possible states we could end up in, and selects the
+one with highest value <code>\(1 - \epsilon\)</code> proportion of times, and a random
+valid action the remaining times. The TD update rule then becomes</p>
+<pre><code class="code">\[
+V(S_i) \leftarrow V(S_i) + \alpha [R_{i+1} + V(S_{i+1}) - V(S_i)]
+\]
+</code></pre>
+<p>Using state values instead of state-action values
+further saves the amount of storage and computation we need to do, and is
+perfectly valid because the desirability of a state should not change depending
+on how we got there. <em>Note that this is true for the racetrack as well</em>: we could
+have used state values instead of state-action values there too. The reason one
+cannot always do this is that general reinforcement learning policies are
+<em>stochastic</em>: the reward and next state we get back from our environment as a
+result of taking a certain action A from a state S can vary, even for exactly the same A and S.</p>
+<p>I've written an implementation of a TD algorithm for Tic-Tac-Toe in Julia which you can find <a href="/blog/draft-post-2/bla-link">on
+GitHub</a>.</p>
+<p>Again we have a core training loop. Spot the updated update rule: bla-link</p>
+<pre><code class="code">function play_game!(policy_me::Policy, policy_opponent::Policy)
+    @assert policy_me.player == me
+    @assert policy_opponent.player == opponent
+    board = Board()
+    current_player = opponent
+    winner = nobody
+    while true
+        winner = get_winner(board)
+        if winner != nobody
+            break
+        end
+        if is_board_full(board)
+            break
+        end
+
+        if current_player == opponent
+            board = move!(policy_opponent, board)
+            current_player = me
+        else
+            board = move!(policy_me, board)
+            current_player = opponent
+        end
+    end
+
+    last_index = index_from_board(board)
+    update!(policy_me, last_index)
+    update!(policy_opponent, last_index)
+    return winner
+end
+
+
+function update!(policy::LearnerPolicy, last_index::Int)
+    if ! policy.update
+        return
+    end
+    if policy.exploiting_moves[end][end] != last_index
+        push!(policy.exploiting_moves[end], last_index)
+    end
+    for moves in policy.exploiting_moves
+        for i in 2:length(moves)
+            a = moves[i-1]
+            b = moves[i]
+            policy.values[a] = policy.values[a] + policy.alpha * (policy.values[b] - policy.values[a])
+        end
+    end
+
+    policy.exploiting_moves = [[]]
+end
+</code></pre>
+<p>I encourage you to take a look at the full code on GitHub. There I compare
+training against 3 possible opponents:</p>
+<ul>
+<li>a random opponent, which just makes random moves</li>
+<li>a semi-clever opponent, whose only strategy is to fill in the last square in
+the board</li>
+<li>a perfect-play opponent, whose strategy is 'perfect' in that it cannot lose.</li>
+</ul>
+<p>The implementation takes advantage of Julia's notion of <em>multiple dispatch</em>
+which nicely allows us to compare different policies.</p>
+<p>Using this code we can train a Tic-Tac-Toe AI which you can play in the
+browser:</p>
 <div id="app"></div>
 <script src="/tilly.js"></script>
 <script>
     var node = document.getElementById("app");
     var app = Elm.Main.embed(node);
 </script>
+<p>This browser version is implemented <a href="/blog/draft-post-2/bla-link">in Elm</a>. It uses a pre-trained
+model that was trained using the Julia code.</p>
+<h2>Limitations of Tabular Methods</h2>
+<p>Monte Carlo algorithms and TD algorithms are both called <em>tabular</em> methods
+because computing the value function requires computing a table of values for
+all states, if we're computing <code>\(V\)</code>, or state-action pairs, if we're
+computing <code>\(Q\)</code>. This is OK if we have a relatively limited number of states
+or state-actions. In Tic-Tac-Toe, we have 2908 possible states, whereas in the
+racetrack example, we have <code>\(9N\)</code> possible state-action pairs, where N is the
+number of squares on the track. These numbers are still small and so tabular
+methods apply. But what about games like Chess or Go, which have huge amounts
+of states? In those cases, we cannot compute a value for every possible state
+or state-action pair. Instead, we approximate the value function using function
+approximation and machine learning. For example, the value function can be
+modelled to be a neural network. Different methods apply in those cases and I
+hope to cover them in a later blog post.</p>
+<p>That's all folks! For a much more comprehensive introduction to reinforcement
+learning algorithms, check out Sutton and Barto's book, which builds up the
+theory gradually from the ground up.</p>
 </section></article>
 
     <div class="dates">
         First published 03 October 2018 at 12:43 UTC, <br />
-        last updated 03 October 2018 at 15:11 UTC.
+        last updated 04 October 2018 at 11:02 UTC.
     </div>
 
     <div class="footer">

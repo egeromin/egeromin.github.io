@@ -318,8 +318,147 @@ An alternative class of algorithms are *temporal-difference (TD) algorithms*, wh
 we'll explore using a different example: Tic-Tac-Toe. Using a TD algorithm, we
 can train an AI to play Tic Tac Toe. The AI learns by playing itself. 
 
-I've written an implementation in Julia which you can find [on
-GitHub](bla-link). The result is a trained Tic-Tac-Toe AI which you can play:
+The basic strategy is the same:
+
+- We define a value function `\(q(a, s)\)` that is used to score the desirability of any
+  state-action pair
+- Our policy is again an *`\(\epsilon\)`-greedy* policy based on the value
+  function. It selects the best policy 
+- We play a number of tic-tac-toe games and, as we play, we update our value
+  estimates based on what we've seen during each game. 
+
+What changes is the last point: the strategy to update the value estimates.
+Whereas with Monte Carlo methods this required storing all of the returns
+following the first visit to a specific state-action pair, with TD-algorithms
+we have a cheaper method. Instead of storing all of the returns for every
+episode, we immediately update the q-values based only on the move that came
+*immediately after* the current one. So suppose when playing a game we have a
+sequence of states and actions `\(S_0, A_0, S_1, A_1, \ldots S_T\)`. Then we
+update the q-values at `\((S_i, A_i)\)` thus:
+
+```
+\[
+Q(S_i, A_i) \leftarrow Q(S_i, A_i) + \alpha [R_{i+1} + Q(S_{i+1}, A_{i+1}) -
+Q(S_i, A_i)]
+\]
+```
+
+Here `\(\alpha\)` is a constant parameter, and `\(R_{i+1}\)` is called 
+the *reward* following action `\(A_i\)`. 
+Our *returns* for an episode at a given state-action pair are just the sum of rewards
+following that state-action pair. In the
+racetrack example, all of the rewards are set constant at -1, to incentivise
+faster runs. In my modified version there's an additional penalty for crashing
+because the reward is set to be -50 in that case, to disincentivise
+crashing. For Tic-Tac-Toe, we set the reward to be zero while the game is not
+finished and then:
+
+- -1, for losing or drawing
+- 1, for winning
+
+The intuition behind this update rule is that the value will 'flow' between
+nodes of our state-action pair 'graph' until it reaches equilibrium. When we
+have equilibrium, we also have the 'true' ideal value. Of course, this
+explanation is disappointingly vague. What's actually going on is that both
+Monte Carlo algorithms and TD algorithms attempt to find solutions to
+*Bellman's equation*, an equation that an idealised value obeying certain
+conditions must satisfy. I won't cover this in detail, but it's at the heart of
+all reinforcement learning algorithms, so be sure to check out Sutton and
+Barto's book{chapter bla-link}.
+
+In the Tic-Tac-Toe case we can cut corners further by assigning values to
+*states* instead of *state-action pairs*. Whereas before we calculated a
+function `\(Q(S, A)\)` for each valid *pair* `\((S, A)\)`, now we just
+calculate a *value function* `\(V(S)\)` for each possible state `\(S\)`. 
+Our policy is still `\(\epsilon\)`-greedy with respect to `\(V\)`: it
+calculates all of the next possible states we could end up in, and selects the
+one with highest value `\(1 - \epsilon\)` proportion of times, and a random
+valid action the remaining times. The TD update rule then becomes
+
+```
+\[
+V(S_i) \leftarrow V(S_i) + \alpha [R_{i+1} + V(S_{i+1}) - V(S_i)]
+\]
+```
+
+Using state values instead of state-action values
+further saves the amount of storage and computation we need to do, and is
+perfectly valid because the desirability of a state should not change depending
+on how we got there. *Note that this is true for the racetrack as well*: we could
+have used state values instead of state-action values there too. The reason one
+cannot always do this is that general reinforcement learning policies are
+*stochastic*: the reward and next state we get back from our environment as a
+result of taking a certain action A from a state S can vary, even for exactly the same A and S.
+
+I've written an implementation of a TD algorithm for Tic-Tac-Toe in Julia which you can find [on
+GitHub](bla-link). 
+
+Again we have a core training loop. Spot the updated update rule: bla-link
+
+```julia
+function play_game!(policy_me::Policy, policy_opponent::Policy)
+    @assert policy_me.player == me
+    @assert policy_opponent.player == opponent
+    board = Board()
+    current_player = opponent
+    winner = nobody
+    while true
+        winner = get_winner(board)
+        if winner != nobody
+            break
+        end
+        if is_board_full(board)
+            break
+        end
+
+        if current_player == opponent
+            board = move!(policy_opponent, board)
+            current_player = me
+        else
+            board = move!(policy_me, board)
+            current_player = opponent
+        end
+    end
+
+    last_index = index_from_board(board)
+    update!(policy_me, last_index)
+    update!(policy_opponent, last_index)
+    return winner
+end
+
+
+function update!(policy::LearnerPolicy, last_index::Int)
+    if ! policy.update
+        return
+    end
+    if policy.exploiting_moves[end][end] != last_index
+        push!(policy.exploiting_moves[end], last_index)
+    end
+    for moves in policy.exploiting_moves
+        for i in 2:length(moves)
+            a = moves[i-1]
+            b = moves[i]
+            policy.values[a] = policy.values[a] + policy.alpha * (policy.values[b] - policy.values[a])
+        end
+    end
+
+    policy.exploiting_moves = [[]]
+end
+```
+
+I encourage you to take a look at the full code on GitHub. There I compare
+training against 3 possible opponents:
+
+- a random opponent, which just makes random moves
+- a semi-clever opponent, whose only strategy is to fill in the last square in
+  the board
+- a perfect-play opponent, whose strategy is 'perfect' in that it cannot lose.
+
+The implementation takes advantage of Julia's notion of *multiple dispatch*
+which nicely allows us to compare different policies.
+
+Using this code we can train a Tic-Tac-Toe AI which you can play in the
+browser:
 
 <div id="app"></div>
 
@@ -329,3 +468,26 @@ GitHub](bla-link). The result is a trained Tic-Tac-Toe AI which you can play:
 	var app = Elm.Main.embed(node);
 </script>
 
+This browser version is implemented [in Elm](bla-link). It uses a pre-trained
+model that was trained using the Julia code.
+
+
+## Limitations of Tabular Methods
+
+Monte Carlo algorithms and TD algorithms are both called *tabular* methods
+because computing the value function requires computing a table of values for
+all states, if we're computing `\(V\)`, or state-action pairs, if we're
+computing `\(Q\)`. This is OK if we have a relatively limited number of states
+or state-actions. In Tic-Tac-Toe, we have 2908 possible states, whereas in the
+racetrack example, we have `\(9N\)` possible state-action pairs, where N is the
+number of squares on the track. These numbers are still small and so tabular
+methods apply. But what about games like Chess or Go, which have huge amounts
+of states? In those cases, we cannot compute a value for every possible state
+or state-action pair. Instead, we approximate the value function using function
+approximation and machine learning. For example, the value function can be
+modelled to be a neural network. Different methods apply in those cases and I
+hope to cover them in a later blog post.
+
+That's all folks! For a much more comprehensive introduction to reinforcement
+learning algorithms, check out Sutton and Barto's book, which builds up the
+theory gradually from the ground up.
