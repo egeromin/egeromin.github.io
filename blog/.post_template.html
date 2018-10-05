@@ -1,5 +1,7 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width,
+    initial-scale=1.0"></meta>
 <link rel="stylesheet" href="{{index_url}}tufte.css" />
 <link rel="stylesheet" href="{{post_url}}article.css" />
 <script
@@ -24,12 +26,19 @@ MathJax.Hub.Config({
 
     {{article}}
 
+    <div id="footnotes">
+        <hr />
+        <ol>
+            {{#each sidenotes}}
+            <li>{{note}}</li>
+            {{/each}}
+        </ol>
+    </div>
+
     <div class="dates">
         First published {{as-date first_published}}, <br />
         last updated {{as-date last_updated}}.
     </div>
 
-    <div class="footer">
-    </div>
 </body>
 </html>

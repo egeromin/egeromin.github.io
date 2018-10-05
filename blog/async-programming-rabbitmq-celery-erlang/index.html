@@ -1,5 +1,7 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width,
+    initial-scale=1.0"></meta>
 <link rel="stylesheet" href="/blog/tufte.css" />
 <link rel="stylesheet" href="/blog/async-programming-rabbitmq-celery-erlang/article.css" />
 <script
@@ -27,7 +29,7 @@ MathJax.Hub.Config({
 <p><em>This article is about building asynchronous microservices. I'll compare how this can be achieved in Javascript and Erlang natively, and in Python using RabbitMQ and Celery.</em></p>
 <h2>But why?</h2>
 <p>My first encounter with asynchronous programming in python was when building a web backend. Upon completing a purchase, the user should eventually receive a PDF invoice by email. This didn't have to happen immediately during the request; in fact, it was better if it didn't, so as not to slow down the purchase needlessly. At the time I wasn't sure how to implement an asynchronous workflow in python, but a quick google search quickly lead me to <a href="http://www.celeryproject.org/">Celery</a> and <a href="https://www.rabbitmq.com/">RabbitMQ</a>. Celery is very easy to use; the only pain is setting up a message broker -- RabbitMQ, in my case. Once you're set up, running a task in the background is as easy as writing, in <code>myapp.py</code>,</p>
-<pre><code class="code">from celery import Celery
+<pre class="code"><code>from celery import Celery
 
 app = Celery('myapp', broker='amqp://localhost:5672')
 # create celery 'app', takes as input the URL to RabbitMQ
@@ -41,7 +43,7 @@ if __name__ == &quot;__main__&quot;:
     # runs print(&quot;Print me asynchronously&quot;) asynchronously!
 </code></pre>
 <p>...and starting the worker, using the command</p>
-<pre><code class="code">celery -A myapp worker
+<pre class="code"><code>celery -A myapp worker
 </code></pre>
 <p>Then running <code>python myapp.py</code> will run <code>my_function</code> asynchronously in the worker process you just started.</p>
 <p>That's what I did, with my invoicing code instead of <code>my_function</code>, and off I went happily implementing the rest of the backend. However, it left me wondering <em>how</em> celery could and should be used. This I knew: that RabbitMQ implemented a queue where messages would be stored, and that the celery worker pulled and processed the messages in this queue one by one until they ran out. But how else can celery and rabbitmq be used? And how does asynchronous programming work in other languages and contexts?</p>
@@ -63,7 +65,7 @@ if __name__ == &quot;__main__&quot;:
 <p>So, keep this example in mind as we move on :smile:</p>
 <h2>Javascript</h2>
 <p>Javascript is an obvious example of asynchronous programming. Most modern websites make heavy use of javascript's AJAX, which stands for asynchronous javascript and xml. AJAX is a way for the user to perform a request to an external server without the website freezing -- a specific example of 'asynchronous I/O'. In code, this is implemented using <em>callbacks</em>. Instead of writing code that makes a request, waits for the response, and then does something with it, you instead write code that makes a request and specifies which <em>callback function</em> should be run when the request returns. Example:</p>
-<pre><code class="code">var xmlhttp = new XMLHttpRequest();
+<pre class="code"><code>var xmlhttp = new XMLHttpRequest();
 
 xmlhttp.onreadystatechange = function() {
     console.log(&quot;Execute some code&quot;);
@@ -76,13 +78,13 @@ xmlhttp.send();
 <p>What's an event, though? An <em>event</em> is a useful javascript abstraction and it's up to the browser to implement it. All we need to know is that there's a whole range of 'events' we can attach callbacks to. Most importantly, these are: changes to the DOM because of user interaction, and responses from servers. Any such real-world event triggers a javascript event. The details of the implementation shouldn't concern us now -- instead, the interesting questions is, given that we may attach callback functions to events, how and when exactly are these callbacks run? Are they all run in the same process, or thread, and at what time? In what order are callbacks run once they are fired, and who is responsible for firing them?</p>
 <p>As mentioned, events are a useful abstraction for 'something happening' in our browser or browser tab. The browser detects that, for example, a request has returned or that a user is hovering her mouse over a particular button. This corresponds to an <em>event</em>, with a particular name, such as <code>onchange</code> or <code>onmouseover</code>. If, in our javascript code, we've set a callback for one of these events, then the browser runs the corresponding code. So what happens if there's many events going on at the same time, or almost? What happens if while one callback is running, another event happens? Are they processed concurrently using threads, or one after another, and in which order?</p>
 <p>It turns out that in javascript there is a <em>single message queue</em> where callbacks are enqueued. Any javascript code you write happens in the same thread. This thread implements an event loop: it waits for the next message in the queue, and then processes it.</p>
-<pre><code class="code">while (queue.waitForMessage()) {
+<pre class="code"><code>while (queue.waitForMessage()) {
   queue.processNextMessage();
 }
 </code></pre>
 <p>In particular, whenever a javascript <em>event</em> happens, the corresponding callback gets added to the message queue, if there's a callback defined.</p>
 <p>One implication of this is that no two callback functions you define are ever run concurrently. So say you define a function <code>modifyState</code> which increments some global state <code>counter</code>:</p>
-<pre><code class="code">var counter = 0;  // global variable
+<pre class="code"><code>var counter = 0;  // global variable
 
 var mycallback = function(e) {
     console.log('Value of counter is: ' + counter.toString());
@@ -96,7 +98,7 @@ mousebutton.addEventListener(&quot;mouseover&quot;, mycallback);
 <p>Then you can be sure that when you hover over <code>my-button</code>, the console will print N and then N+1, in order -- whatever else happens. More generally, your callback may assume that the state of your program won't be modified by any other callback.</p>
 <h3>Multiple Runtimes</h3>
 <p>Each iframe in your HTML or javascript <em>worker</em> has its own message queue, stack and heap. That means that we can implement concurrent 'microservices' in javascript by spinning up new javascript workers.</p>
-<pre><code class="code">var my_worker = new Worker('my-worker.js') //spin up a new worker
+<pre class="code"><code>var my_worker = new Worker('my-worker.js') //spin up a new worker
 // could also be an iframe, e.g.
 // var my_iframe = document.getElementById('my-iframe');
 
@@ -146,7 +148,7 @@ my_worker.postMessage(my_message)  // post message to worker
 </ul>
 <p>See <a href="http://erlang.org/download/armstrong_thesis_2003.pdf">Joe Armstrong's PhD Thesis</a> for more details.</p>
 <p>So in particular, every Erlang subprocess has its own 'mailbox': a queue to which we can send messages, which can be any erlang object, or <em>term</em>.</p>
-<pre><code class="code">Message_pid ! {a_message, &quot;Message string&quot;},
+<pre class="code"><code>Message_pid ! {a_message, &quot;Message string&quot;},
 % Send a message to the process with id `Message_pid`
 </code></pre>
 <h3>Email Cruncher in Erlang</h3>
@@ -195,7 +197,7 @@ my_worker.postMessage(my_message)  // post message to worker
 <h2>AMQP in Python using Kombu</h2>
 <p>I'll be using <a href="http://kombu.readthedocs.io/en/latest/">Kombu</a> to use RabbitMQ in python. Despite the RabbitMQ team recommending <a href="http://pika.readthedocs.io/en/0.11.2/index.html">pika</a>, I chose Kombu instead, because it's used by Celery. However, some AMQP features available in pika don't appear to be available in Kombu. For example, I couldn't find a way to have the RabbitMQ server pick a random queue name, which is possible in pika by declaring a queue without a name: <code>channel.queue_declare()</code>. Having given that warning, here's a very quick intro to Kombu</p>
 <p>Example of declaring a direct exchange and publishing to that exchange</p>
-<pre><code class="code">from kombu import Connection, Exchange
+<pre class="code"><code>from kombu import Connection, Exchange
 
 if __name__ == &quot;__main__&quot;:
     rabbit_url = &quot;amqp://username:password@localhost:5778/vhost&quot;
@@ -206,7 +208,7 @@ if __name__ == &quot;__main__&quot;:
                          declare=[email_exchange], retry=True)
 </code></pre>
 <p>Example of declaring an exchange, a queue, and consuming from that queue:</p>
-<pre><code class="code">from kombu import Connection, Exchange, Queue
+<pre class="code"><code>from kombu import Connection, Exchange, Queue
 
 def message_callback(content, message):
     print(&quot;Message content: {}&quot;.format(content))  
@@ -261,7 +263,7 @@ if __name__ == &quot;__main__&quot;:
 <li>In the kombu version, the spammer is initialised with the local name it's supposed to spam. Here, because I cannot pass arguments to a celery worker, I use environment variables instead -- hence the <code>os.getenv(&quot;SPAMMER_QUEUE&quot;, 'spammer')</code> in <code>cruncher.py</code>.</li>
 </ul>
 <p>Nevertheless, despite not being able to implement the full version of my very contrived email cruncher example in Celery, it remains hugely useful. As already shown, invoking tasks asynchronously is very easy. Creating complex pipelines of tasks is very easy using Canvas. And finally, RPC is available by default:</p>
-<pre><code class="code">@app.task
+<pre class="code"><code>@app.task
 def add_one(x):
     return x + 1
 
@@ -277,7 +279,7 @@ print(result)  # prints '2'
 <li><a href="https://docs.python.org/3/library/asyncio.html">asyncio</a> - an alternative to message brokers for asynchronous programming in python. It implements an event loop.</li>
 <li>Priority queues. AMQP allows you to define priority queues with priority 1-10. Messages with a higher priority get dispatched to workers first.</li>
 </ul>
-<pre><code class="code"># priority using celery
+<pre class="code"><code># priority using celery
 queue = Queue('my-queue', queue_arguments={'x-max-priority': 10})  # define a priority queue
 task.apply_async({kwarg: &quot;some kwarg&quot;}, priority=4)  # invoke an async task with priority
 </code></pre>
@@ -294,12 +296,17 @@ Gist</a> back
 in January 2018.</p>
 </section></article>
 
-    <div class="dates">
-        First published 27 September 2018 at 16:36 UTC, <br />
-        last updated 03 October 2018 at 12:41 UTC.
+    <div id="footnotes">
+        <hr />
+        <ol>
+            
+        </ol>
     </div>
 
-    <div class="footer">
+    <div class="dates">
+        First published 27 September 2018 at 16:36 UTC, <br />
+        last updated 05 October 2018 at 10:20 UTC.
     </div>
+
 </body>
 </html>
