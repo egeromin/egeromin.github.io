@@ -4,6 +4,17 @@
     initial-scale=1.0"></meta>
 <link rel="stylesheet" href="/blog/tufte.css" />
 <link rel="stylesheet" href="/blog/intro-reinforcement-learning-tic-tac-toe/article.css" />
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-134129591-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-134129591-1');
+</script>
+
 <script
 src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML'
 async></script>
@@ -12,7 +23,8 @@ MathJax.Hub.Config({
   // skipTags: ["<pre>", "<code>"]
   tex2jax: {
       skipTags: ["script","noscript","style","textarea"]
-      }
+      },
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
   });
 </script>
 <title>A Brisk Intro to Reinforcement Learning</title>
