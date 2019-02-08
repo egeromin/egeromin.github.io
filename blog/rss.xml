@@ -12,6 +12,14 @@
         
         
         <item>
+            <title>Tunable Neural Nets</title>
+            <link>https://emanuelgeromin.com/blog/neural-nets-as-odes/</link>
+            <guid>https://emanuelgeromin.com/blog/neural-nets-as-odes/</guid>
+            <dc:creator>Emanuel Geromin</dc:creator>
+            <pubDate>Fri, 08 Feb 2019 09:08:39 GMT</pubDate>
+        </item>
+        
+        <item>
             <title>A Brisk Intro to Reinforcement Learning</title>
             <link>https://emanuelgeromin.com/blog/intro-reinforcement-learning-tic-tac-toe/</link>
             <guid>https://emanuelgeromin.com/blog/intro-reinforcement-learning-tic-tac-toe/</guid>
