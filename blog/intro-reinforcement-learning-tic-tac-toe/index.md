@@ -72,8 +72,8 @@ to completion should intuitively correspond to the best action. Why? Because
 the logbooks tell us exactly which of the 9 actions has, on average, a more
 desirable outcome. If for example logbook 3 corresponding to action `\((+1, -1)\)` averages
 87 moves to completion, and logbook 2 corresponding to action `\((+1, 0)\)`
-averages 56 moves to completion, then choosing `\((+1, -1)\)` is measurably
-better than choosing `\((+1, 0)\)`. 
+averages 56 moves to completion, then choosing `\((+1, 0)\)` is measurably
+better than choosing `\((+1, -1)\)`. 
 
 This intution is in fact correct and has solid theoretical
 underpinnings{Sutton and Barto, Chapters 3-5}. 
