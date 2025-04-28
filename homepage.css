@@ -120,14 +120,6 @@ h1 {
         -5.9rem -1.9rem 0 -1.7rem #0c2754;
 }
 
-#twitter:after {
-    content: "#";
-}
-
-#twitter:hover:after {
-    content: "Twitter";
-}
-
 #linkedin {
     position: absolute;
     left: 80vw;
@@ -148,5 +140,5 @@ h1 {
 }
 
 #linkedin:hover:after {
-    content: "LinkedIn™"
+    content: "LinkedIn"
 }
