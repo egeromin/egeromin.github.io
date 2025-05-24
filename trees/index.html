@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring 2025 - Welsberg Tree-Planting - 70 Trees</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+            background-color: #2c5f2d;
+            color: white;
+            margin: -20px -20px 30px -20px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .quote {
+            font-style: italic;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #2c5f2d;
+            margin: 30px 0 20px 0;
+            font-size: 22px;
+            border-bottom: 2px solid #2c5f2d;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #4a7c4e;
+            margin: 25px 0 15px 0;
+            font-size: 18px;
+        }
+
+        .day-section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .schedule-item {
+            display: flex;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.3s ease;
+            align-items: flex-start;
+        }
+
+        .schedule-item:last-child {
+            border-bottom: none;
+        }
+
+        .schedule-item:hover {
+            background-color: #f0f7f0;
+        }
+
+        .time {
+            font-weight: bold;
+            color: #2c5f2d;
+            min-width: 100px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .activity {
+            flex: 1;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .sector {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4a7c4e;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .sector h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .info-box {
+            background-color: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .strategy-section {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .strategy-section h2 {
+            margin-top: 0;
+        }
+
+        .location-section {
+            margin-top: 30px;
+        }
+
+        .location-section h2 {
+            margin-top: 0;
+        }
+
+        .map-note {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            header {
+                margin: -10px -10px 20px -10px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            h3 {
+                font-size: 16px;
+            }
+
+            .schedule-item {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .time {
+                margin-bottom: 10px;
+                margin-right: 0;
+                min-width: auto;
+            }
+
+            .day-section {
+                padding: 15px;
+            }
+        }
+
+        .highlight {
+            background-color: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .nav-menu {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #2c5f2d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-menu:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Spring 2025 - Welsberg Tree-Planting - 70 Trees</h1>
+        <p class="quote">"Südtirol: All German planning, all Italian execution" - N. Wilson</p>
+    </header>
+
+    <h2>Agenda</h2>
+
+    <div class="day-section">
+        <h3>Friday</h3>
+
+        <div class="schedule-item">
+            <div class="time">07:00</div>
+            <div class="activity">Breakfast</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">08:00</div>
+            <div class="activity">
+                Inspect available tooling at Grandpa's house. Especially:
+                <ul>
+                    <li>watering can x 2</li>
+                    <li>pick x 2</li>
+                    <li>shovel x 2</li>
+                    <li>gloves x 4</li>
+                    <li>ax x 2</li>
+                    <li>scissors x 2</li>
+                    <li>20L water containers x2 or x3</li>
+                    <li>nails</li>
+                    <li>cable ties (fascette)</li>
+                    <li>Hammer for poles</li>
+                    <li>String (special string? Should not cut the trees)</li>
+                    <li>Iron rod to open up ground for the poles</li>
+                    <li>Plastic covers for all unused equipment</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">08:30</div>
+            <div class="activity">
+                <strong>Emanuel:</strong> Collect trees (2/3 of total?) at Forststation Welsberg. Store in the Garage.<br><br>
+                <strong>Fede & Philip:</strong> Food shopping! Bread, ham, cheese, beer, cookies, chocolate, fresh fruit. For 4 days. Include Gluten Free options for Nathane.
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">09:30 - 10:00</div>
+            <div class="activity">
+                Inspect goods in Niederdorf. Buy missing items, especially:
+                <ul>
+                    <li>70x bamboo poles, for tree support</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">10:00 - 12:00</div>
+            <div class="activity">
+                Collect items with Gerhard.<br>
+                Maybe store in Welsberg in the interim, to collect them all before the shop closes. Then bring them into the forest in the afternoon.
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">12:00 - 13:00</div>
+            <div class="activity">Lunch break</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">13:00 - 15:30</div>
+            <div class="activity">
+                Transport trees into the forest.<br>
+                Sectors A, B, possibly C? Depends on how overgrown sector C is.
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">15:30 - 17:30</div>
+            <div class="activity">Experiment with the first 1-3 trees! Test and <em>optimise</em></div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">19:30</div>
+            <div class="activity">Dinner</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">20:30 - 23:00</div>
+            <div class="activity">Lecture on the history of forestry in South Tyrol, 1700-2025</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">23:00 - 23:05</div>
+            <div class="activity">Coffee break</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">23:05 - 00:00</div>
+            <div class="activity">Group meditation: learn how to feel the forest</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">00:00 - 00:05</div>
+            <div class="activity">Group good night kiss</div>
+        </div>
+    </div>
+
+    <div class="day-section">
+        <h3>Saturday</h3>
+
+        <div class="schedule-item">
+            <div class="time">07:30</div>
+            <div class="activity">Breakfast</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">08:00 - 14:00</div>
+            <div class="activity">Short sightseeing hike and packed lunch</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">15:00 - 18:30</div>
+            <div class="activity">
+                Foresting<br>
+                ~ca 60-80cm fence per side. 3 sides
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">20:00</div>
+            <div class="activity">Dinner (cooked + cleaned by Nathan)</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">21:00 - 00:00</div>
+            <div class="activity">
+                Lecture on the potential of generative AI for foresting in South Tyrol.<br><br>
+                Coffee break, group meditation, good night kiss.
+            </div>
+        </div>
+    </div>
+
+    <div class="day-section">
+        <h3>Sunday</h3>
+
+        <div class="schedule-item">
+            <div class="time">08:00</div>
+            <div class="activity">Breakfast</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">09:30 - 12:30</div>
+            <div class="activity">Foresting</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">12:30 - 14:00</div>
+            <div class="activity">Lunch break - packed lunch</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">14:00 - 18:30</div>
+            <div class="activity">Foresting</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">20:00</div>
+            <div class="activity">Dinner</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">21:00 - 00:00</div>
+            <div class="activity">
+                Shamanic ritual with foraged berries and roots. Dress code: Lederhosen/Dirndl.<br><br>
+                Coffee break, group meditation, good night kiss.
+            </div>
+        </div>
+    </div>
+
+    <div class="day-section">
+        <h3>Monday</h3>
+
+        <div class="schedule-item">
+            <div class="time">08:00</div>
+            <div class="activity">Breakfast</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">08:30</div>
+            <div class="activity"><strong>Emanuel:</strong> Collect remaining trees (?)</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">09:30 - 13:00</div>
+            <div class="activity">Foresting</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">13:00 - 14:00</div>
+            <div class="activity">Lunch break - packed lunch</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">14:00 - 16:00</div>
+            <div class="activity">Foresting - closure, clean up</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">19:00</div>
+            <div class="activity">Aperitivo & Dinner</div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="time">21:00 - 00:00</div>
+            <div class="activity">
+                Deep introspection - wishing the trees a good life. Group meditation.<br><br>
+                Coffee break, good night kiss.
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>Work Estimate:</strong> 16 hours = 4.3 trees per hour
+    </div>
+
+    <div class="strategy-section">
+        <h2>Tree Planting Strategies</h2>
+        <p>Preferably next to a <strong>stump</strong>.</p>
+        <p>
+            <img src="/trees/images/Tree-planting-strategy.png" alt="Tree planting strategy" />
+        </p>
+    </div>
+
+    <div class="location-section">
+        <h2>Location</h2>
+        <div class="map-note">
+            <p><strong>Map Reference:</strong> <a href="https://maps.civis.bz.it/#lang=de" target="_blank">https://maps.civis.bz.it/#lang=de</a></p>
+            <p>It's a very thin strip of land, ca. 35m × 700m, between 1300mh and 1700mh.</p>
+            <p>The borders are marked on the trees in <span class="highlight">BLUE (east)</span> and <span class="highlight">BLUE-YELLOW (west)</span>.</p>
+        </div>
+
+        <div class="sector">
+            <h3>Sector A</h3>
+            <p>~20-30 trees</p>
+            <p>
+                <img src="/trees/images/Sector-A.png" alt="Sector-A" />
+            </p>
+        </div>
+
+        <div class="sector">
+            <h3>Sector B</h3>
+            <p>~30 trees</p>
+            <p>
+                <img src="/trees/images/Sector-B.png" alt="Sector-A" />
+            </p>
+        </div>
+
+        <div class="sector">
+            <h3>Sector C</h3>
+            <p>~10-20 trees</p>
+            <p><em>We might skip this one, depending on how overgrown it is.</em></p>
+            <p>
+                <img src="/trees/images/Sector-C.png" alt="Sector-A" />
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="nav-menu" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+    ↑ Top
+</div>
+</body>
+</html>
